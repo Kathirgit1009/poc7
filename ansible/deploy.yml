@@ -1,0 +1,28 @@
+---
+- name: Deploy POC-7 Docker Container
+  hosts: webservers
+  become: yes
+  tasks:
+
+    - name: Stop existing container (if running)
+      shell: docker stop poc7-container || true
+
+    - name: Remove existing container (if exists)
+      shell: docker rm poc7-container || true
+
+    - name: Remove old Docker image (if exists)
+      shell: docker rmi poc7-app:latest || true
+
+    - name: Build new Docker image
+      shell: docker build -t poc7-app:latest /var/lib/jenkins/workspace/poc7-pipeline/
+
+    - name: Run the new Docker container
+      shell: docker run -d --name poc7-container -p 8090:80 poc7-app:latest
+
+    - name: Verify container is running
+      shell: docker ps | grep poc7-container
+      register: result
+
+    - name: Print container status
+      debug:
+        msg: "{{ result.stdout }}"
